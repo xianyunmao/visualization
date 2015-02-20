@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Heatmaps</title>
+  <style>
+  html, body, #map-canvas {
+    height: 100%;
+    margin: 0px;
+    padding: 0px
+  }
+  #panel {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    margin-left: -180px;
+    z-index: 5;
+    background-color: #fff;
+    padding: 5px;
+    border: 1px solid #999;
+  }
+  </style>
+  <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=visualization"></script>
+  <script>
+  function updateMap()  {
+    // the following creates a Google Map with zoom level 10 and the LatLong coordinates
+    // stated below
+    var latlng = new google.maps.LatLng(52.053335, 4.917755);
+    var myOptions = {
+      zoom: 10,
+      center: latlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    var map = new google.maps.Map(document.getElementById("google_map"), myOptions);
+    updateTrafficOnMap(map, null, 1);
+  };
+
+  function updateTrafficOnMap(map, trafficLayer, on)
+{
+  if(on == 0) {
+    trafficLayer.setMap(null);
+    trafficLayer = null;
+    setTimeout(function() { updateTrafficOnMap(map, null, 1) }, 1)
+  }
+  if(on == 1) {
+    var trafficLayer2 = new google.maps.TrafficLayer();
+    trafficLayer2.setMap(map);
+    // after 300ms (or 5 minutes) update the traffic map
+    setTimeout(function() { updateTrafficOnMap(map, trafficLayer2, 0)}, 300000)
+  }
+}
+google.maps.event.addDomListener(window, 'load', updateMap);
+
+</script>
+</head>
+
+<body>
+  <div id="panel">
+    <button onclick="toggleHeatmap()">Toggle Heatmap</button>
+    <button onclick="changeGradient()">Change gradient</button>
+    <button onclick="changeRadius()">Change radius</button>
+    <button onclick="changeOpacity()">Change opacity</button>
+  </div>
+  <div id="google_map"></div>
+</body>
+</html>
