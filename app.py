@@ -46,14 +46,14 @@ def signal_handler(signal, frame):
 
 def generate():
     while 1==1:
-        time.sleep(5.000)
+        time.sleep(3.000)
         #print(hourly_data)
         #print('wait\n')
         if client.get("pfx_data"):
             #print(client.get("pfx_hour_in_week") + '\n')
             #print("wait"+",".join(client.get("pfx_data")) + '\n' )
             #yield '{"result":'+",".join(client.get("pfx_data"))+',"ctime":' + client.get("pfx_hour_in_week") +'}'
-            yield 'data:'+ client.get("pfx_hour_in_week") + "," + ",".join(client.get("pfx_data")) + '\n\n'
+            yield 'data:'+ client.get("pfx_hour_in_week") + "," + "|".join(client.get("pfx_data")) + "," + "|".join(client.get("pfx_eta")) + '\n\n'
 
 
 
@@ -102,6 +102,34 @@ def get_hourly_in_a_week():
     #return Response(stream_with_context(generate()), headers={'Content-Type':'text/event-stream'})
     return Response(generate(), headers={'Content-Type':'text/event-stream'})
 
+
+
+def generate_jetson():
+    while 1==1:
+
+        #print(hourly_data)
+        #print('wait\n')
+        if client.get("jetson_data"):
+            #print(client.get("jetson_data") + '\n')
+            #print("wait"+",".join(client.get("pfx_data")) + '\n' )
+            #yield '{"result":'+",".join(client.get("pfx_data"))+',"ctime":' + client.get("pfx_hour_in_week") +'}'
+            yield 'data:'+ client.get("jetson_last_ts") + "," + client.get("jetson_last_epoch") + "," + "|".join(client.get("jetson_data"))  + '\n\n'
+        time.sleep(299.000)
+@app.route('/_jetson_rt')
+def get_jetson_rt():
+    #return Response(stream_with_context(generate()), headers={'Content-Type':'text/event-stream'})
+    return Response(generate_jetson(), headers={'Content-Type':'text/event-stream'})
+
+
+def generate_lr_metrics():
+    while 1==1:
+        if client.get("lr_request"):
+            yield 'data:'+ client.get("lr_last_ts") + "&" + "|".join(client.get("lr_app_open")) + "&" + "|".join(client.get("lr_request")) + "&" + "|".join(client.get("lr_eta")) + "&" + "|".join(client.get("lr_drivers")) + '\n\n'
+        time.sleep(299.000)
+@app.route('/_lr_metrics')
+def get_lr_metrics():
+    #return Response(stream_with_context(generate()), headers={'Content-Type':'text/event-stream'})
+    return Response(generate_lr_metrics(), headers={'Content-Type':'text/event-stream'})
 
 #@app.before_first_request
 #def runThread():

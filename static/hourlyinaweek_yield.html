@@ -16,19 +16,21 @@
     white-space: nowrap;
   }
   </style>
-  <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3&amp;sensor=false"></script>
+  <!--script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3&amp;sensor=false"></script-->
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=visualization"></script>
   <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.9/src/markerwithlabel.js"></script>
   <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/maplabel/src/maplabel.js"></script>
   <script type="text/javascript" src="jquery-1.7.2.js"></script>
   <script type="text/javascript">
-  var latLng = new google.maps.LatLng(37.744546, -122.433523);
-  var homeLatLng = new google.maps.LatLng(37.744546, -122.433523);
-  var map;
+  var latLng = new google.maps.LatLng(37.784546, -122.443523);
+  var homeLatLng = new google.maps.LatLng(37.824546, -122.443523);
+  var timeLatLng = new google.maps.LatLng(37.834546, -122.443523);
+  var map, map1, map2, map3, map4, map5, map6;
   var circles = [];
   var gradient = ['#ffffff', '#ffe5e5', '#ffcccc', '#ffb2b2', '#ff9999',
                   '#ff7f7f', '#ff6666', '#ff4c4c', '#ff3232', '#ff1919', '#ff0000'  ];
-  gradient = ['#27BF00', '#35AB16', '#43982D', '#518544', '#60725B', '#6E5F72', '#7C4C89',
-              '#8B39A0', '#9926B7', '#A713CE', '#B600E5'];
+  gradient = ['#DCE500', '#D9CE05', '#D6B70B', '#D3A011', '#D08916', '#CD721C', '#CA5B22',
+              '#C74427', '#C42D2D', '#C11633', '#BF0039'];
   function initialize() {
                 var config = {
                   "radius": 30,
@@ -38,22 +40,82 @@
                   "gradient": { 0.45: "rgb(0,0,255)", 0.55: "rgb(0,255,255)", 0.65: "rgb(0,255,0)", 0.95: "yellow", 1.0: "rgb(255,0,0)" }
                 };
   var myOptions = {
-    zoom: 13,
+    zoom: 12,
     center: latLng,
     mapTypeId: google.maps.MapTypeId.ROADMAP
   }
   map = new google.maps.Map(document.getElementById('map_canvas'), myOptions);
-
+  map1 = new google.maps.Map(document.getElementById('map_canvas1'), myOptions);
+  map2 = new google.maps.Map(document.getElementById('map_canvas2'), myOptions);
+  map3 = new google.maps.Map(document.getElementById('map_canvas3'), myOptions);
+  map4 = new google.maps.Map(document.getElementById('map_canvas4'), myOptions);
+  map5 = new google.maps.Map(document.getElementById('map_canvas5'), myOptions);
+  map6 = new google.maps.Map(document.getElementById('map_canvas6'), myOptions);
   mapLabel = []
   mapLabel.push(new MapLabel({
-    text: 'test',
+    text: 'Demand-Supply',
     position: homeLatLng,
     map: map,
-    fontSize: 35,
-    align: 'right'
+    fontSize: 20,
+    align: 'center'
   }));
-  mapLabel[0].setMap(map);
+  mapLabel.push(new MapLabel({
+    text: 'Ride Request',
+    position: homeLatLng,
+    map: map1,
+    fontSize: 20,
+    align: 'center'
+  }));
+  mapLabel.push(new MapLabel({
+    text: '5min+ ETA Hail request',
+    position: homeLatLng,
+    map: map2,
+    fontSize: 20,
+    align: 'center'
+  }));
+  mapLabel.push(new MapLabel({
+    text: '10min+ ETA Hail request',
+    position: homeLatLng,
+    map: map3,
+    fontSize: 20,
+    align: 'center'
+  }));
+  mapLabel.push(new MapLabel({
+    text: 'Canceled rides',
+    position: homeLatLng,
+    map: map4,
+    fontSize: 20,
+    align: 'center'
+  }));
+  mapLabel.push(new MapLabel({
+    text: 'Request_timed_out',
+    position: homeLatLng,
+    map: map5,
+    fontSize: 20,
+    align: 'center'
+  }));
+  mapLabel.push(new MapLabel({
+    text: 'No_driver_available',
+    position: homeLatLng,
+    map: map6,
+    fontSize: 20,
+    align: 'center'
+  }));
 
+  timeLabel = new MapLabel({
+    text: 'Wait!',
+    position: timeLatLng,
+    map: map,
+    fontSize: 20,
+    align: 'center'
+  });
+  var heatmap1 = new google.maps.visualization.HeatmapLayer();
+  var heatmap2 = new google.maps.visualization.HeatmapLayer();
+  var heatmap3 = new google.maps.visualization.HeatmapLayer();
+  var heatmap4 = new google.maps.visualization.HeatmapLayer();
+  var heatmap5 = new google.maps.visualization.HeatmapLayer();
+  var heatmap6 = new google.maps.visualization.HeatmapLayer();
+  var heatMapData = [];
 
   circles = [];
 
@@ -66,9 +128,6 @@
 
   source.addEventListener('message', function(e) {
 
-
-
-    mapLabel[0].setMap(null);
     var arrayLength = circles.length;
     for (var i = 0; i < arrayLength; i++) {
       circles[i].setMap(null);
@@ -81,7 +140,8 @@
     //alert(heatMapData_string);
     //console.log(e.data);
     //alert(data);
-    heatMapData_array = e.data.toString().split(",");
+    data_message =  e.data.toString().split(",");
+    heatMapData_array = data_message[1].toString().split("|");
     var arrayLength = heatMapData_array.length;
     //alert(data.toString());
     for (var i = 1; i < arrayLength; i++) {
@@ -92,7 +152,7 @@
 
 
       homeLatLng = new google.maps.LatLng( parseFloat(carray[0]), parseFloat(carray[1]));
-      var assigned_color = gradient[ parseInt( parseFloat(carray[2]))]
+      var assigned_color = gradient[ Math.round(parseFloat(carray[2])*6)+2];
 
       circles.push( new google.maps.Circle({
         strokeColor: '#FF0000',
@@ -102,13 +162,127 @@
         fillOpacity: 0.5,
         map: map,
         center: homeLatLng,
-        radius: (parseFloat(carray[3]) )*2
+        radius: parseFloat(carray[3])
       })
     );
   }
-  console.log(carray);
 
-  document.getElementById("p1").innerHTML = heatMapData_array[0];
+  heatmap1.setMap(null);
+  heatMapData = [];
+  heatMapData_array = data_message[2].toString().split("|");
+  var arrayLength = heatMapData_array.length;
+  //alert(data.toString());
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+
+    heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+
+
+  }
+  heatmap1 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 10
+  });
+  heatmap1.setMap(map1);
+  heatmap2.setMap(null);
+  heatMapData = [];
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+    if (parseFloat(carray[2])>=5){
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    }
+
+  }
+  heatmap2 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 5
+  });
+  heatmap2.setMap(map2);
+  heatmap3.setMap(null);
+  heatMapData = [];
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+    if (parseFloat(carray[2])>=10){
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    }
+
+  }
+  heatmap3 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 2
+  });
+  heatmap3.setMap(map3);
+
+  heatmap4.setMap(null);
+  heatMapData = [];
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+    if (parseInt(carray[3])==1){
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    }
+
+  }
+  heatmap4 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 10
+  });
+  heatmap4.setMap(map4);
+
+
+  heatmap5.setMap(null);
+  heatMapData = [];
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+    if (parseInt(carray[4])==1){
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    }
+
+  }
+  heatmap5 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 10
+  });
+  heatmap5.setMap(map5);
+
+  heatmap6.setMap(null);
+  heatMapData = [];
+  for (var i = 1; i < arrayLength; i++) {
+
+    content = heatMapData_array[i];
+    carray = content.split(" ");
+    if (parseInt(carray[5])==1){
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    }
+
+  }
+  heatmap6 = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 8,
+    maxIntensity: 10
+  });
+  heatmap6.setMap(map6);
+
+
+  console.log(carray);
+  document.getElementById("p1").innerHTML = data_message[0];
+  timeLabel.setMap(null);
+  timeLabel.set('text', data_message[0]);
+  timeLabel.setMap(map);
   }, false);
 
   source.addEventListener('open', function(e) {
@@ -133,6 +307,12 @@
 </head>
 <body onload="initialize()">
   <p id="p1">SF HeatMap!</p>
-  <div id="map_canvas" style="height: 1000px; width: 100%;"></div>
+  <div id="map_canvas" style="position:absolute; left:0px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas1" style="position:absolute; left:375px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas2" style="position:absolute; left:750px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas3" style="position:absolute; left:1125px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas4" style="position:absolute; left:0px; top: 425px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas5" style="position:absolute; left:375px; top: 425px;  height: 375px; width: 375px;"></div>
+  <div id="map_canvas6" style="position:absolute; left:750px; top:425px; height: 375px; width: 375px;"></div>
 </body>
 </html>
