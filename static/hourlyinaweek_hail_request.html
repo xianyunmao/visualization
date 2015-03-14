@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>Hail request heatmap</title>
+  <style type="text/css">
+  .labels {
+    color: red;
+    background-color: white;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    width: 40px;
+    border: 2px solid black;
+    white-space: nowrap;
+  }
+  </style>
+  <!--script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3&amp;sensor=false"></script-->
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=visualization"></script>
+  <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.9/src/markerwithlabel.js"></script>
+  <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/maplabel/src/maplabel.js"></script>
+  <script type="text/javascript" src="jquery-1.7.2.js"></script>
+  <script type="text/javascript">
+  var latLng = new google.maps.LatLng(37.744546, -122.433523);
+  var homeLatLng = new google.maps.LatLng(37.744546, -122.433523);
+  var map;
+  var circles = [];
+  var gradient = ['#ffffff', '#ffe5e5', '#ffcccc', '#ffb2b2', '#ff9999',
+                  '#ff7f7f', '#ff6666', '#ff4c4c', '#ff3232', '#ff1919', '#ff0000'  ];
+  gradient = ['#DCE500', '#D9CE05', '#D6B70B', '#D3A011', '#D08916', '#CD721C', '#CA5B22',
+              '#C74427', '#C42D2D', '#C11633', '#BF0039'];
+  function initialize() {
+                var config = {
+                  "radius": 30,
+                  "element": "map_canvas",
+                  "visible": true,
+                  "opacity": 40,
+                  "gradient": { 0.45: "rgb(0,0,255)", 0.55: "rgb(0,255,255)", 0.65: "rgb(0,255,0)", 0.95: "yellow", 1.0: "rgb(255,0,0)" }
+                };
+  var myOptions = {
+    zoom: 13,
+    center: latLng,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  }
+  map = new google.maps.Map(document.getElementById('map_canvas'), myOptions);
+
+  mapLabel = []
+  mapLabel.push(new MapLabel({
+    text: 'test',
+    position: homeLatLng,
+    map: map,
+    fontSize: 35,
+    align: 'right'
+  }));
+  mapLabel[0].setMap(map);
+
+
+  if (!!window.EventSource) {
+    var source = new EventSource('/_hourly_in_a_week');
+
+  } else {
+    // Result to xhr polling :(
+  }
+  var heatmap = new google.maps.visualization.HeatmapLayer();
+  var heatMapData = [];
+  source.addEventListener('message', function(e) {
+    mapLabel[0].setMap(null);
+    var options = {
+      weekday: "long", year: "numeric", month: "short",
+      day: "numeric"//, hour: "2-digit", minute: "2-digit"
+    };
+    //alert(heatMapData_string);
+    //console.log(e.data);
+    //alert(data);
+    heatMapData = [];
+    heatMapData_array = e.data.toString().split(",");
+    var arrayLength = heatMapData_array.length;
+    //alert(data.toString());
+    for (var i = 1; i < arrayLength; i++) {
+
+      content = heatMapData_array[i];
+      carray = content.split(" ");
+
+      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: carray[4]});
+
+
+  }
+  heatmap = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    radius: 30
+  });
+  heatmap.setMap(map);
+  console.log(carray);
+
+  document.getElementById("p1").innerHTML = heatMapData_array[0];
+  }, false);
+
+  source.addEventListener('open', function(e) {
+    // Connection was opened.
+  }, false);
+
+  source.addEventListener('error', function(e) {
+    if (e.readyState == EventSource.CLOSED) {
+      // Connection was closed.
+    }
+  }, false);
+
+
+
+};
+
+
+
+//google.maps.event.addDomListener(window, 'load', initMap);
+
+</script>
+</head>
+<body onload="initialize()">
+  <p id="p1">SF HeatMap!</p>
+  <div id="map_canvas" style="height: 1000px; width: 100%;"></div>
+</body>
+</html>

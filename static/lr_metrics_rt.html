@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <title>Ride completion ratio</title>
+  <title>Live ride and metrics real time (5 mins)</title>
   <style type="text/css">
   .labels {
     color: red;
@@ -50,57 +50,51 @@
   map3 = new google.maps.Map(document.getElementById('map_canvas3'), myOptions);
   map4 = new google.maps.Map(document.getElementById('map_canvas4'), myOptions);
   map5 = new google.maps.Map(document.getElementById('map_canvas5'), myOptions);
-  map6 = new google.maps.Map(document.getElementById('map_canvas6'), myOptions);
+  //map6 = new google.maps.Map(document.getElementById('map_canvas6'), myOptions);
   mapLabel = []
   mapLabel.push(new MapLabel({
-    text: 'Demand-Supply',
+    text: 'App Open',
     position: homeLatLng,
     map: map,
     fontSize: 20,
     align: 'center'
   }));
   mapLabel.push(new MapLabel({
-    text: 'Ride Request',
+    text: 'Request',
     position: homeLatLng,
     map: map1,
     fontSize: 20,
     align: 'center'
   }));
   mapLabel.push(new MapLabel({
-    text: '5min+ ETA Hail request',
+    text: 'ETA over 5 mins',
     position: homeLatLng,
     map: map2,
     fontSize: 20,
     align: 'center'
   }));
   mapLabel.push(new MapLabel({
-    text: '10min+ ETA Hail request',
+    text: 'Available Drivers',
     position: homeLatLng,
     map: map3,
     fontSize: 20,
     align: 'center'
   }));
   mapLabel.push(new MapLabel({
-    text: 'Canceled rides',
+    text: 'In_hail Drivers',
     position: homeLatLng,
     map: map4,
     fontSize: 20,
     align: 'center'
   }));
   mapLabel.push(new MapLabel({
-    text: 'Request_timed_out',
+    text: 'Occupied Drivers',
     position: homeLatLng,
     map: map5,
     fontSize: 20,
     align: 'center'
   }));
-  mapLabel.push(new MapLabel({
-    text: 'No_driver_available',
-    position: homeLatLng,
-    map: map6,
-    fontSize: 20,
-    align: 'center'
-  }));
+
 
   timeLabel = new MapLabel({
     text: 'Wait!',
@@ -109,6 +103,7 @@
     fontSize: 20,
     align: 'center'
   });
+  var heatmap = new google.maps.visualization.HeatmapLayer();
   var heatmap1 = new google.maps.visualization.HeatmapLayer();
   var heatmap2 = new google.maps.visualization.HeatmapLayer();
   var heatmap3 = new google.maps.visualization.HeatmapLayer();
@@ -120,7 +115,7 @@
   circles = [];
 
   if (!!window.EventSource) {
-    var source = new EventSource('/_hourly_in_a_week');
+    var source = new EventSource('/_lr_metrics');
 
   } else {
     // Result to xhr polling :(
@@ -140,62 +135,71 @@
     //alert(heatMapData_string);
     //console.log(e.data);
     //alert(data);
-    data_message =  e.data.toString().split(",");
+    data_message =  e.data.toString().split("&");
+    //last_epoch = data_message[1]
+    //display_cut_off = parseInt(last_epoch) - 3600
+    //document.getElementById("timestamp1").defaultValue = data_message[0].toString().substring(0,19);
+    //document.getElementById("timestamp2").defaultValue = new Date(); // data_message[0].toString().substring(0,19);
     heatMapData_array = data_message[1].toString().split("|");
+
+    heatmap.setMap(null);
+    heatMapData = [];
+    //;alert(data_message[4]);
+    //heatMapData_array = data_message[2].toString().split("|");
     var arrayLength = heatMapData_array.length;
     //alert(data.toString());
-    for (var i = 1; i < arrayLength; i++) {
+    for (var i = 0; i < arrayLength; i++) {
 
       content = heatMapData_array[i];
-      carray = content.split(" ");
+      carray = content.split(";");
+      coord = carray[1].split(",");
+      heatMapData.push({location: new google.maps.LatLng(coord[0], coord[1]), weight: 1});
 
+    }
+    heatmap = new google.maps.visualization.HeatmapLayer({
+      data: heatMapData,
+      radius: 8,
+      maxIntensity: 5
+    });
+    heatmap.setMap(map);
 
-
-      homeLatLng = new google.maps.LatLng( parseFloat(carray[0]), parseFloat(carray[1]));
-      var assigned_color = gradient[ Math.round(parseFloat(carray[2])*6)+2];
-
-      circles.push( new google.maps.Circle({
-        strokeColor: '#FF0000',
-        strokeOpacity: 0,
-        strokeWeight: 0,
-        fillColor: assigned_color,
-        fillOpacity: 0.5,
-        map: map,
-        center: homeLatLng,
-        radius: parseFloat(carray[3])
-      })
-    );
-  }
 
   heatmap1.setMap(null);
-  heatMapData = [];
   heatMapData_array = data_message[2].toString().split("|");
   var arrayLength = heatMapData_array.length;
+
+  heatMapData = [];
+  //heatMapData_array = data_message[2].toString().split("|");
   //alert(data.toString());
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
-
-    heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
-
+    carray = content.split(";");
+    coord = carray[3].split(",");
+    heatMapData.push({location: new google.maps.LatLng(coord[0], coord[1]), weight: 1});
 
   }
   heatmap1 = new google.maps.visualization.HeatmapLayer({
     data: heatMapData,
     radius: 8,
-    maxIntensity: 10
+    maxIntensity: 5
   });
   heatmap1.setMap(map1);
+
   heatmap2.setMap(null);
+  heatMapData_array = data_message[3].toString().split("|");
+  var arrayLength = heatMapData_array.length;
+
   heatMapData = [];
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
-    if (parseFloat(carray[2])>=5){
-      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    carray = content.split(";");
+    if (parseInt(carray[0])>5 ) {
+      coord = carray[1].split(",");
+      heatMapData.push({location: new google.maps.LatLng(coord[0], coord[1]), weight: 1});
     }
+
 
   }
   heatmap2 = new google.maps.visualization.HeatmapLayer({
@@ -204,67 +208,73 @@
     maxIntensity: 5
   });
   heatmap2.setMap(map2);
+
+  heatMapData_array = data_message[4].toString().split("|");
+  var arrayLength = heatMapData_array.length;
+
+
   heatmap3.setMap(null);
   heatMapData = [];
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
-    if (parseFloat(carray[2])>=10){
-      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    carray = content.split(";");
+    if (carray[0]  == 'available' ) {
+      heatMapData.push({location: new google.maps.LatLng(carray[2], carray[3]), weight: 1});
     }
 
   }
   heatmap3 = new google.maps.visualization.HeatmapLayer({
     data: heatMapData,
     radius: 8,
-    maxIntensity: 2
+    maxIntensity: 5
   });
   heatmap3.setMap(map3);
 
   heatmap4.setMap(null);
   heatMapData = [];
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
-    if (parseInt(carray[3])==1){
-      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    carray = content.split(";");
+    if (carray[0]  == 'in_hail' ) {
+      heatMapData.push({location: new google.maps.LatLng(carray[2], carray[3]), weight: 1});
     }
 
   }
   heatmap4 = new google.maps.visualization.HeatmapLayer({
     data: heatMapData,
     radius: 8,
-    maxIntensity: 10
+    maxIntensity: 5
   });
   heatmap4.setMap(map4);
 
 
   heatmap5.setMap(null);
   heatMapData = [];
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
-    if (parseInt(carray[4])==1){
-      heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
+    carray = content.split(";");
+    if (carray[0]  == 'occupied' ) {
+      coord = carray[2].split(",");
+      heatMapData.push({location: new google.maps.LatLng(carray[2], carray[3]), weight: 1});
     }
 
   }
   heatmap5 = new google.maps.visualization.HeatmapLayer({
     data: heatMapData,
     radius: 8,
-    maxIntensity: 10
+    maxIntensity: 5
   });
   heatmap5.setMap(map5);
 
   heatmap6.setMap(null);
   heatMapData = [];
-  for (var i = 1; i < arrayLength; i++) {
+  for (var i = 0; i < arrayLength; i++) {
 
     content = heatMapData_array[i];
-    carray = content.split(" ");
+    carray = content.split(";");
     if (parseInt(carray[5])==1){
       heatMapData.push({location: new google.maps.LatLng(carray[0], carray[1]), weight: 1});
     }
@@ -273,13 +283,14 @@
   heatmap6 = new google.maps.visualization.HeatmapLayer({
     data: heatMapData,
     radius: 8,
-    maxIntensity: 10
+    maxIntensity: 5
   });
   heatmap6.setMap(map6);
 
 
   console.log(carray);
-  document.getElementById("p1").innerHTML = data_message[0];
+
+
   timeLabel.setMap(null);
   timeLabel.set('text', data_message[0]);
   timeLabel.setMap(map);
@@ -306,13 +317,15 @@
 </script>
 </head>
 <body onload="initialize()">
-  <p id="p1">SF HeatMap!</p>
+  <p id="p1">SF HeatMap (from Liveride and metrics server T-5 min)!</p>
+  <input type="datetime" id="timestamp1" step="1">
+  <input type="datetime" id="timestamp2" step="1">
   <div id="map_canvas" style="position:absolute; left:0px; height: 375px; width: 375px;"></div>
   <div id="map_canvas1" style="position:absolute; left:375px; height: 375px; width: 375px;"></div>
   <div id="map_canvas2" style="position:absolute; left:750px; height: 375px; width: 375px;"></div>
-  <div id="map_canvas3" style="position:absolute; left:1125px; height: 375px; width: 375px;"></div>
-  <div id="map_canvas4" style="position:absolute; left:0px; top: 425px; height: 375px; width: 375px;"></div>
-  <div id="map_canvas5" style="position:absolute; left:375px; top: 425px;  height: 375px; width: 375px;"></div>
-  <div id="map_canvas6" style="position:absolute; left:750px; top:425px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas3" style="position:absolute; left:0px; top: 425px; height: 375px; width: 375px;"></div>
+  <div id="map_canvas4" style="position:absolute; left:375px; top: 425px;  height: 375px; width: 375px;"></div>
+  <div id="map_canvas5" style="position:absolute; left:750px; top: 425px; height: 375px; width: 375px;"></div>
+
 </body>
 </html>
